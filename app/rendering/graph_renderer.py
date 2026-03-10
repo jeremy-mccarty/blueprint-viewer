@@ -11,6 +11,10 @@ class GraphRenderer:
         # clear canvas and update scroll region before drawing
         self.canvas.delete("all")
 
+        # Set default scroll region if not set
+        if not self.canvas.cget("scrollregion"):
+            self.canvas.configure(scrollregion=(0, 0, 2000, 2000))
+
         if graph.nodes:
             # compute bounding box taking into account per-node height
             from app.rendering.node_renderer import NODE_WIDTH, HEADER_HEIGHT
@@ -24,9 +28,9 @@ class GraphRenderer:
                 h = HEADER_HEIGHT + 20 + len(visible_pins) * 15
                 min_x = min(min_x, node.x)
                 min_y = min(min_y, node.y)
-                max_x = max(max_x, node.x + NODE_WIDTH)
+                max_x = max(max_x, node.x + node.width)
                 max_y = max(max_y, node.y + h)
-            self.canvas.configure(scrollregion=(min_x, min_y, max_x, max_y))
+            self.canvas.configure(scrollregion=(min_x - 50, min_y - 50, max_x + 50, max_y + 50))
 
         for node in graph.nodes:
             self.node_renderer.render_node(node)

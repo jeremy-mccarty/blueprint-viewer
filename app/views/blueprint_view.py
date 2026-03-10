@@ -60,7 +60,10 @@ class BlueprintView(tk.Frame):
         bp_text = self.text.get("1.0", tk.END)
         graph = parse_blueprint_text(bp_text)
         self.renderer.render_graph(graph)
+        self.canvas.set_graph(graph)
 
     def clear_all(self):
         self.text.delete("1.0", tk.END)
-        self.renderer.render_graph(BlueprintGraph())
+        graph = BlueprintGraph()
+        self.renderer.render_graph(graph)
+        self.canvas.set_graph(graph)

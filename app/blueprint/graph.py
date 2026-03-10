@@ -15,9 +15,11 @@ class Pin:
 class Node:
     name: str
     display_name: str = ""
+    class_name: str = ""
     x: int = 0
     y: int = 0
     pins: List[Pin] = field(default_factory=list)
+    width: int = 120
 
 @dataclass
 class BlueprintGraph:

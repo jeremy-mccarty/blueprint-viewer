@@ -68,13 +68,18 @@ def parse_blueprint_text(text: str) -> BlueprintGraph:
             elif class_name == "K2Node_VariableSet":
                 node_name = "Set"
             elif class_name == "K2Node_Event":
-                node_name = "Event"
-            elif class_name == "K2Node_CustomEvent":
-                node_name = "CustomEvent"
+                event_match = re.search(r'EventReference=\([^)]*MemberName="([^"]+)"', block)
+                if event_match:
+                    member_name = event_match.group(1)
+                    if member_name.startswith("Receive"):
+                        node_name = member_name[7:]  # remove "Receive"
+                    else:
+                        node_name = member_name
             elif class_name == "K2Node_MacroInstance":
-                macro_match = re.search(r'MacroName="([^"]+)"', block)
+                macro_match = re.search(r'MacroGraph="([^"]+)"', block)
                 if macro_match:
-                    node_name = macro_match.group(1)
+                    full_path = macro_match.group(1)
+                    node_name = full_path.split(':')[-1].rstrip("'")
             elif class_name == "K2Node_CallMacro":
                 macro_match = re.search(r'MacroName="([^"]+)"', block)
                 if macro_match:
@@ -85,6 +90,20 @@ def parse_blueprint_text(text: str) -> BlueprintGraph:
                     node_name = func_match.group(1)
             elif class_name == "K2Node_SwitchName":
                 node_name = "Switch"
+            elif class_name == "K2Node_PromotableOperator":
+                op_match = re.search(r'OperationName="([^"]+)"', block)
+                if op_match:
+                    op = op_match.group(1)
+                    if op == "Greater":
+                        node_name = ">"
+                    elif op == "Less":
+                        node_name = "<"
+                    elif op == "Equal":
+                        node_name = "=="
+                    elif op == "NotEqual":
+                        node_name = "!="
+                    else:
+                        node_name = op
             # Fallback for other K2Node_ or K2_ prefixes
             else:
                 if node_name.startswith("K2Node_"):
@@ -95,9 +114,15 @@ def parse_blueprint_text(text: str) -> BlueprintGraph:
                 if "_" in node_name and node_name.split("_")[-1].isdigit():
                     node_name = "_".join(node_name.split("_")[:-1])
 
+        if node_name == "VSize":
+            node_name = "VectorLength"
+        elif node_name == "IfThenElse":
+            node_name = "Branch"
+
         node = Node(
             name=name_match.group(1),
             display_name=node_name,
+            class_name=class_name if class_match else "",
             x=int(x_match.group(1)) if x_match else 0,
             y=int(y_match.group(1)) if y_match else 0,
             pins=[]
