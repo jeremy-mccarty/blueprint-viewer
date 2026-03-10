@@ -1,0 +1,135 @@
+name: Build & Release CSV→JSON App
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags like v1.0.6
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+
+      # ---------------- Clean old build folders ----------------
+      - name: Clean old build folders (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: rm -rf dist/ build/ release/ AppDir || true
+
+      - name: Clean old build folders (Windows)
+        if: runner.os == 'Windows'
+        run: Remove-Item -Recurse -Force dist,build,release -ErrorAction SilentlyContinue
+        shell: powershell
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller==6.19.0
+
+      - name: Create release folder
+        run: mkdir -p release
+
+      # ---------------- Linux AppImage build ----------------
+      - name: Build Linux AppImage
+        if: runner.os == 'Linux'
+        run: |
+          pyinstaller --noconfirm --onefile --name CSVtoJSON app/main.py
+
+          # AppDir structure
+          mkdir -p AppDir/usr/bin
+          cp dist/CSVtoJSON AppDir/usr/bin/
+
+          mkdir -p AppDir/usr/share/applications
+          echo "[Desktop Entry]
+          Name=CSVtoJSON
+          Exec=CSVtoJSON
+          Icon=CSVtoJSON
+          Terminal=true
+          Type=Application
+          Categories=Utility;" > AppDir/usr/share/applications/CSVtoJSON.desktop
+
+          # Icon from repo
+          mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+          cp assets/CSVtoJSON.png AppDir/usr/share/icons/hicolor/256x256/apps/
+
+          # Download linuxdeploy
+          wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          chmod +x linuxdeploy-x86_64.AppImage
+
+          # Build AppImage
+          ./linuxdeploy-x86_64.AppImage --appdir AppDir --output appimage
+          mv CSVtoJSON*.AppImage release/CSVtoJSON-linux.AppImage
+
+      # ---------------- Windows build ----------------
+      - name: Build Windows executable
+        if: runner.os == 'Windows'
+        run: |
+          pyinstaller --noconfirm --onefile --name CSVtoJSON app/main.py
+          copy dist\CSVtoJSON.exe release\CSVtoJSON-Windows.exe
+        shell: powershell
+
+      # ---------------- macOS build ----------------
+      - name: Build macOS executable
+        if: runner.os == 'macOS'
+        run: |
+          pyinstaller --noconfirm --onefile --name CSVtoJSON app/main.py
+          cp dist/CSVtoJSON release/CSVtoJSON-macOS
+
+      # ---------------- Upload artifact ----------------
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: csvtojson-${{ runner.os }}
+          path: release/
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # ---------------- Download artifacts ----------------
+      - name: Download Linux artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: csvtojson-Linux
+          path: release/
+
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: csvtojson-Windows
+          path: release/
+
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: csvtojson-macOS
+          path: release/
+
+      - name: List release artifacts
+        run: ls -l release/
+
+      # ---------------- Create GitHub release ----------------
+      - name: Create GitHub release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.ref_name }}
+          name: CSV→JSON Release ${{ github.ref_name }}
+          body: Automated release including Linux AppImage, Windows .exe, and macOS binary
+          artifacts: release/*
+          token: ${{ secrets.GH_PAT }} # Fine-grained token with Contents: Read & Write + Actions: Read & Write
