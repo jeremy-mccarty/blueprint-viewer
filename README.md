@@ -1,5 +1,7 @@
 # Blueprint Viewer
 
+![Blueprint Viewer Example](assets/blueprint_viewer_example.png)
+
 A desktop application for visualizing Unreal Engine Blueprints. Paste blueprint text snippets and see them rendered as interactive node graphs with connections.
 
 ## Features
