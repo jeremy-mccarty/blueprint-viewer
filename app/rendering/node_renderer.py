@@ -85,15 +85,12 @@ class NodeRenderer:
         display_name = node.display_name
         class_name = node.class_name
         if class_name.startswith("MaterialExpression"):
-            # Strip MaterialExpression prefix and trailing _number
             display_name = class_name[len("MaterialExpression"):]
-            # Remove trailing _number from node_name
             if "_" in node.display_name and node.display_name.split("_")[-1].isdigit():
                 display_name = display_name.split("_")[0]
             display_name = display_name.replace("_", " ").strip()
         display_name = self.format_camel_case(display_name)
 
-        # Cache text width calculations
         def get_text_width(text, font=(None, 8)):
             text_id = self.canvas.create_text(0, 0, text=text, anchor="w", font=font)
             bbox = self.canvas.bbox(text_id)
@@ -101,7 +98,6 @@ class NodeRenderer:
             self.canvas.delete(text_id)
             return width
 
-        # Modularize pin rendering logic
         def get_pin_label(pin):
             label = pin.name
             if pin.default_value:
@@ -111,22 +107,18 @@ class NodeRenderer:
         visible_pins = [p for p in node.pins if not getattr(p, 'hidden', False)]
         pin_label_widths = [get_text_width(get_pin_label(pin)) for pin in visible_pins]
 
-        # Calculate node width: display name, pin labels, and padding
         text_width = get_text_width(display_name, font=(None, 10))
         max_pin_label_width = max(pin_label_widths) if pin_label_widths else 0
         node_width = max(NODE_WIDTH, text_width + 40, max_pin_label_width + 40)
-        node.width = node_width  # store the calculated width
+        node.width = node_width
 
-        # Use constants for magic numbers
         PIN_SPACING = 18
         TOP_PADDING = 12
         BOTTOM_PADDING = 12
 
-        # Calculate node height: header, padding, pins
         node_height = HEADER_HEIGHT + TOP_PADDING + len(visible_pins) * PIN_SPACING + BOTTOM_PADDING
         node.height = node_height
 
-        # Error handling for canvas operations
         try:
             self.create_rounded_rectangle(
                 x, y, x + node_width, y + node_height,
@@ -134,7 +126,6 @@ class NodeRenderer:
                 fill=style.NODE_FILL, outline=style.NODE_OUTLINE, width=2
             )
 
-            # header bar
             header_color = self.get_node_header_color(class_name, node)
             self.create_rounded_rectangle(
                 x, y, x + node_width, y + HEADER_HEIGHT,
@@ -146,16 +137,13 @@ class NodeRenderer:
                 text=display_name, fill=style.TEXT_COLOR
             )
 
-            # Draw pins below header, spaced and padded inside node
             for i, pin in enumerate(visible_pins):
                 pin_y = y + HEADER_HEIGHT + TOP_PADDING + i * PIN_SPACING
-                # determine colour based on category
                 if pin.category == "exec":
                     pin_col = style.EXEC_PIN_COLOR
                 else:
                     pin_col = style.DATA_PIN_COLOR if pin.category else style.PIN_COLOR
 
-                # position depends on direction
                 if pin.direction == "EGPD_Output":
                     pin_x = x + node_width - 12
                     label_anchor = "e"
@@ -165,11 +153,18 @@ class NodeRenderer:
                     label_anchor = "w"
                     label_x = pin_x + 8
 
-                # Draw pin circle
-                self.canvas.create_oval(pin_x - 4, pin_y - 4, pin_x + 4, pin_y + 4,
-                                        fill=pin_col, outline="")
+                # Draw right-pointing arrow only for exec pins, else circle
+                if pin.category == "exec":
+                    points = [
+                        pin_x - 6, pin_y - 6,
+                        pin_x + 6, pin_y,
+                        pin_x - 6, pin_y + 6
+                    ]
+                    self.canvas.create_polygon(points, fill=pin_col, outline="")
+                else:
+                    self.canvas.create_oval(pin_x - 4, pin_y - 4, pin_x + 4, pin_y + 4,
+                                            fill=pin_col, outline="")
 
-                # Draw pin label
                 label = pin.name
                 if pin.default_value:
                     label += f" = {pin.default_value}"
