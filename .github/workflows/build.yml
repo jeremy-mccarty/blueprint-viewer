@@ -1,4 +1,4 @@
-name: Build & Release CSV→JSON App
+name: Build & Release Blueprint Viewer
 
 on:
   push:
@@ -45,24 +45,24 @@ jobs:
       - name: Build Linux AppImage
         if: runner.os == 'Linux'
         run: |
-          pyinstaller --noconfirm --onefile --name CSVtoJSON app/main.py
+          pyinstaller --noconfirm --onefile --name BlueprintViewer app/main.py
 
           # AppDir structure
           mkdir -p AppDir/usr/bin
-          cp dist/CSVtoJSON AppDir/usr/bin/
+          cp dist/BlueprintViewer AppDir/usr/bin/
 
           mkdir -p AppDir/usr/share/applications
           echo "[Desktop Entry]
-          Name=CSVtoJSON
-          Exec=CSVtoJSON
-          Icon=CSVtoJSON
+          Name=BlueprintViewer
+          Exec=BlueprintViewer
+          Icon=BlueprintViewer
           Terminal=true
           Type=Application
-          Categories=Utility;" > AppDir/usr/share/applications/CSVtoJSON.desktop
+          Categories=Utility;" > AppDir/usr/share/applications/BlueprintViewer.desktop
 
           # Icon from repo
           mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
-          cp assets/CSVtoJSON.png AppDir/usr/share/icons/hicolor/256x256/apps/
+          cp assets/BlueprintViewer.png AppDir/usr/share/icons/hicolor/256x256/apps/
 
           # Download linuxdeploy
           wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
@@ -70,28 +70,28 @@ jobs:
 
           # Build AppImage
           ./linuxdeploy-x86_64.AppImage --appdir AppDir --output appimage
-          mv CSVtoJSON*.AppImage release/CSVtoJSON-linux.AppImage
+          mv BlueprintViewer*.AppImage release/BlueprintViewer-linux.AppImage
 
       # ---------------- Windows build ----------------
       - name: Build Windows executable
         if: runner.os == 'Windows'
         run: |
-          pyinstaller --noconfirm --onefile --name CSVtoJSON app/main.py
-          copy dist\CSVtoJSON.exe release\CSVtoJSON-Windows.exe
+          pyinstaller --noconfirm --onefile --name BlueprintViewer app/main.py
+          copy dist\BlueprintViewer.exe release\BlueprintViewer-Windows.exe
         shell: powershell
 
       # ---------------- macOS build ----------------
       - name: Build macOS executable
         if: runner.os == 'macOS'
         run: |
-          pyinstaller --noconfirm --onefile --name CSVtoJSON app/main.py
-          cp dist/CSVtoJSON release/CSVtoJSON-macOS
+          pyinstaller --noconfirm --onefile --name BlueprintViewer app/main.py
+          cp dist/BlueprintViewer release/BlueprintViewer-macOS
 
       # ---------------- Upload artifact ----------------
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: csvtojson-${{ runner.os }}
+          name: blueprintviewer-${{ runner.os }}
           path: release/
 
   release:
@@ -106,19 +106,19 @@ jobs:
       - name: Download Linux artifact
         uses: actions/download-artifact@v4
         with:
-          name: csvtojson-Linux
+          name: blueprintviewer-Linux
           path: release/
 
       - name: Download Windows artifact
         uses: actions/download-artifact@v4
         with:
-          name: csvtojson-Windows
+          name: blueprintviewer-Windows
           path: release/
 
       - name: Download macOS artifact
         uses: actions/download-artifact@v4
         with:
-          name: csvtojson-macOS
+          name: blueprintviewer-macOS
           path: release/
 
       - name: List release artifacts
@@ -129,7 +129,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref_name }}
-          name: CSV→JSON Release ${{ github.ref_name }}
-          body: Automated release including Linux AppImage, Windows .exe, and macOS binary
+          name: Blueprint Viewer Release ${{ github.ref_name }}
+          body: Automated release including Linux AppImage, Windows .exe, and macOS binary for Blueprint Viewer
           artifacts: release/*
           token: ${{ secrets.GH_PAT }} # Fine-grained token with Contents: Read & Write + Actions: Read & Write
