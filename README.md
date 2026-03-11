@@ -1,5 +1,19 @@
 # Blueprint Viewer
 
+[![Python](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/)
+[![Latest Release](https://img.shields.io/github/v/release/jeremy-mccarty/blueprint-viewer?logo=github&label=Release&color=blue)](https://github.com/jeremy-mccarty/blueprint-viewer/releases/latest)
+[![CI/CD](https://github.com/jeremy-mccarty/blueprint-viewer/actions/workflows/build.yml/badge.svg)](https://github.com/jeremy-mccarty/blueprint-viewer/actions/workflows/build.yml)
+
+## Downloads
+
+[![Download Linux](https://img.shields.io/badge/Download-Linux-blue?logo=linux)](https://github.com/jeremy-mccarty/blueprint-viewer/releases/latest)
+[![Download Windows](https://img.shields.io/badge/Download-Windows-brightgreen?logo=windows)](https://github.com/jeremy-mccarty/blueprint-viewer/releases/latest)
+[![Download macOS](https://img.shields.io/badge/Download-macOS-lightgrey?logo=apple)](https://github.com/jeremy-mccarty/blueprint-viewer/releases/latest)
+
+Visualize Unreal Engine Blueprints and Material nodes interactively on Linux, Windows, and macOS.
+
+# Blueprint Viewer
+
 ![Blueprint Viewer Example](assets/blueprint_viewer_example.png)
 
 A desktop application for visualizing Unreal Engine Blueprints. Paste blueprint text snippets and see them rendered as interactive node graphs with connections.
