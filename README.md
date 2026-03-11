@@ -6,8 +6,10 @@ A desktop application for visualizing Unreal Engine Blueprints. Paste blueprint 
 
 ## Features
 
-**Blueprint Parsing**: Parses Unreal Engine blueprint text exports into structured node and pin data
+**Blueprint Parsing**: Parses Unreal Engine blueprint and material blueprint text exports into structured node and pin data
+**Material Blueprint Support**: Visualizes Unreal Engine Material nodes, including pins and wires, with custom coloring and simplified node names
 **Visual Rendering**: Renders nodes, pins, and wires in a clean, modern interface
+**Custom Node Coloring**: Material nodes are colored green or blue based on type, and node names are simplified for readability
 **Dynamic Sizing**: Nodes automatically resize based on the number of pins
 **Interactive Canvas**: Zoom, pan, and navigate large graphs
 **Node Dragging**: Move nodes interactively on the canvas

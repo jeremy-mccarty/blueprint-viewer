@@ -59,7 +59,14 @@ class NodeRenderer:
         
         return self.canvas.create_polygon(points, smooth=True, **kwargs)
 
-    def get_node_header_color(self, class_name):
+    def get_node_header_color(self, class_name, node):
+        # Custom colors for Material nodes
+        if class_name.startswith("MaterialExpression"):
+            # Blue for Texture nodes, Green otherwise
+            if "Texture" in class_name:
+                return "#2A3A4A"  # blue
+            else:
+                return "#3A4A3A"  # green
         if "Event" in class_name:
             return style.NODE_HEADER_COLORS["event"]
         elif "Function" in class_name or "CallFunction" in class_name:
@@ -74,8 +81,17 @@ class NodeRenderer:
     def render_node(self, node):
         x, y = node.x, node.y
 
-        # Format display name with spaces for CamelCase
-        display_name = self.format_camel_case(node.display_name)
+        # Node name simplification for Material nodes
+        display_name = node.display_name
+        class_name = node.class_name
+        if class_name.startswith("MaterialExpression"):
+            # Strip MaterialExpression prefix and trailing _number
+            display_name = class_name[len("MaterialExpression"):]
+            # Remove trailing _number from node_name
+            if "_" in node.display_name and node.display_name.split("_")[-1].isdigit():
+                display_name = display_name.split("_")[0]
+            display_name = display_name.replace("_", " ").strip()
+        display_name = self.format_camel_case(display_name)
 
         # Cache text width calculations
         def get_text_width(text, font=(None, 8)):
@@ -119,7 +135,7 @@ class NodeRenderer:
             )
 
             # header bar
-            header_color = self.get_node_header_color(node.class_name)
+            header_color = self.get_node_header_color(class_name, node)
             self.create_rounded_rectangle(
                 x, y, x + node_width, y + HEADER_HEIGHT,
                 CORNER_RADIUS,
