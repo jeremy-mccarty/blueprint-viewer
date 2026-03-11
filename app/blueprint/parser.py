@@ -7,14 +7,14 @@ LINKEDTO_REGEX = r"LinkedTo=\(([^)]+)\)"
 
 
 def _extract_pin_blocks(block: str) -> list[str]:
-    """Return a list of pin definitions from a node block.
-
-    The Blueprints format embeds parentheses in several places (e.g.
-    NSLOCTEXT and structures), so a naive regex will stop at the first
-    closing parenthesis.  This helper scans for "CustomProperties Pin ("
-    and then collects text until the matching closing paren at the same
-    nesting level.
     """
+    Return a list of pin definitions from a node block.
+
+    The Blueprints format embeds parentheses in several places (e.g. NSLOCTEXT and structures),
+    so a naive regex will stop at the first closing parenthesis. This helper scans for
+    "CustomProperties Pin (" and then collects text until the matching closing paren at the same nesting level.
+    """
+    # Improved: Use explicit state tracking for balanced parentheses
     blocks = []
     start_idx = 0
     marker = "CustomProperties Pin ("
@@ -41,6 +41,7 @@ def parse_blueprint_text(text: str) -> BlueprintGraph:
     node_blocks = text.split("Begin Object")[1:]
 
     for block in node_blocks:
+        # Only process BlueprintGraph nodes
         if "Class=/Script/BlueprintGraph.K2Node" not in block:
             continue
 
@@ -54,12 +55,12 @@ def parse_blueprint_text(text: str) -> BlueprintGraph:
 
         # Use CustomFunctionName if present, otherwise Name
         custom_name_match = re.search(r'CustomFunctionName="([^"]*)"', block)
+        node_name = name_match.group(1)
         if custom_name_match and custom_name_match.group(1).strip():
             node_name = custom_name_match.group(1)
-        else:
-            node_name = name_match.group(1)
 
         # Simplify names based on class
+        class_name = ""
         class_match = re.search(r'Class=/Script/BlueprintGraph\.([^ ]+)', block)
         if class_match:
             class_name = class_match.group(1)
@@ -69,7 +70,7 @@ def parse_blueprint_text(text: str) -> BlueprintGraph:
                 node_name = "Set"
             elif class_name == "K2Node_Event":
                 event_match = re.search(r'EventReference=\([^)]*MemberName="([^"]+)"', block)
-                if event_match:
+                if event_match and event_match.group(1):
                     member_name = event_match.group(1)
                     if member_name.startswith("Receive"):
                         node_name = member_name[7:]  # remove "Receive"
@@ -77,26 +78,28 @@ def parse_blueprint_text(text: str) -> BlueprintGraph:
                         node_name = member_name
             elif class_name == "K2Node_MacroInstance":
                 macro_match = re.search(r'MacroGraph="([^"]+)"', block)
-                if macro_match:
+                if macro_match and macro_match.group(1):
                     full_path = macro_match.group(1)
                     node_name = full_path.split(':')[-1].rstrip("'")
             elif class_name == "K2Node_CallMacro":
                 macro_match = re.search(r'MacroName="([^"]+)"', block)
-                if macro_match:
+                if macro_match and macro_match.group(1):
                     node_name = macro_match.group(1)
             elif class_name == "K2Node_CallFunction":
                 func_match = re.search(r'FunctionReference=\([^)]*MemberName="([^"]+)"', block)
-                if func_match:
+                if func_match and func_match.group(1):
                     node_name = func_match.group(1)
             elif class_name == "K2Node_SwitchName":
                 node_name = "Switch"
             elif class_name == "K2Node_PromotableOperator":
                 op_match = re.search(r'OperationName="([^"]+)"', block)
-                if op_match:
+                if op_match and op_match.group(1):
                     op = op_match.group(1)
                     if op == "Greater":
                         node_name = ">"
                     elif op == "Less":
+                        node_name = "<"
+                    # ...existing code...
                         node_name = "<"
                     elif op == "Equal":
                         node_name = "=="

@@ -1,8 +1,9 @@
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional
 
 @dataclass
 class Pin:
+    """Represents a pin on a node."""
     pin_id: str
     name: str
     direction: str
@@ -13,6 +14,7 @@ class Pin:
 
 @dataclass
 class Node:
+    """Represents a node in the Blueprint graph."""
     name: str
     display_name: str = ""
     class_name: str = ""
@@ -23,4 +25,5 @@ class Node:
 
 @dataclass
 class BlueprintGraph:
+    """Represents the entire Blueprint graph."""
     nodes: List[Node] = field(default_factory=list)

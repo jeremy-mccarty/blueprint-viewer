@@ -18,13 +18,16 @@ class WireRenderer:
         return points
 
     def render_pin_links(self, pin, graph):
+        """
+        Render links for a given pin. Robustly matches Material node links (sometimes only pin_id, sometimes node+pin).
+        """
         for linked in pin.pending_links:
-            # Find the target node/pin
+            # Patch: Robustly match Material node links (sometimes only pin_id, sometimes node+pin)
             target_node = None
             target_pin = None
             for node in graph.nodes:
                 for p in node.pins:
-                    if p.pin_id == linked or f"{node.name} {p.pin_id}" == linked:
+                    if p.pin_id == linked or f"{node.name} {p.pin_id}" == linked or f"{node.display_name} {p.pin_id}" == linked:
                         target_node = node
                         target_pin = p
                         break
@@ -33,24 +36,23 @@ class WireRenderer:
                 y1 = pin_y(pin, graph)
                 x2 = pin_x(target_pin, graph)
                 y2 = pin_y(target_pin, graph)
-                # Draw cubic Bezier curves for wires
                 wire_color = style.WIRE_COLORS.get(pin.category, style.WIRE_COLORS["default"])
+                # Output to input
                 if pin.direction == "EGPD_Output" and target_pin.direction == "EGPD_Input":
-                    # Control points: out from output, in to input
                     dist = abs(x2 - x1) * 0.4
                     p1 = (x1 + dist, y1)
                     p2 = (x2 - dist, y2)
                     points = self.bezier_points((x1, y1), p1, p2, (x2, y2))
                     self.canvas.create_line(*points, fill=wire_color, width=2, smooth=True, capstyle="round", joinstyle="round")
+                # Input to output
                 elif pin.direction == "EGPD_Input" and target_pin.direction == "EGPD_Output":
-                    # Control points: out from input (left), in to output (right)
                     dist = abs(x2 - x1) * 0.4
                     p1 = (x1 - dist, y1)
                     p2 = (x2 + dist, y2)
                     points = self.bezier_points((x1, y1), p1, p2, (x2, y2))
                     self.canvas.create_line(*points, fill=wire_color, width=2, smooth=True, capstyle="round", joinstyle="round")
+                # Fallback: straight line
                 else:
-                    # Straight line for same direction or other cases
                     self.canvas.create_line(x1, y1, x2, y2, fill=wire_color, width=2, capstyle="round", joinstyle="round")
 
 def pin_x(pin, graph):

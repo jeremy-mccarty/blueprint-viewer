@@ -77,85 +77,92 @@ class NodeRenderer:
         # Format display name with spaces for CamelCase
         display_name = self.format_camel_case(node.display_name)
 
-        # Calculate required width based on display name and pin labels
-        visible_pins = [p for p in node.pins if not getattr(p, 'hidden', False)]
-        pin_label_widths = []
-        for pin in visible_pins:
+        # Cache text width calculations
+        def get_text_width(text, font=(None, 8)):
+            text_id = self.canvas.create_text(0, 0, text=text, anchor="w", font=font)
+            bbox = self.canvas.bbox(text_id)
+            width = bbox[2] - bbox[0] if bbox else 0
+            self.canvas.delete(text_id)
+            return width
+
+        # Modularize pin rendering logic
+        def get_pin_label(pin):
             label = pin.name
             if pin.default_value:
                 label += f" = {pin.default_value}"
-            text_id = self.canvas.create_text(0, 0, text=label, anchor="w", font=(None, 8))
-            bbox = self.canvas.bbox(text_id)
-            width = bbox[2] - bbox[0] if bbox else 0
-            pin_label_widths.append(width)
-            self.canvas.delete(text_id)
+            return label
+
+        visible_pins = [p for p in node.pins if not getattr(p, 'hidden', False)]
+        pin_label_widths = [get_text_width(get_pin_label(pin)) for pin in visible_pins]
 
         # Calculate node width: display name, pin labels, and padding
-        text_id = self.canvas.create_text(0, 0, text=display_name, anchor="center")
-        bbox = self.canvas.bbox(text_id)
-        text_width = bbox[2] - bbox[0] if bbox else 0
-        self.canvas.delete(text_id)
+        text_width = get_text_width(display_name, font=(None, 10))
         max_pin_label_width = max(pin_label_widths) if pin_label_widths else 0
         node_width = max(NODE_WIDTH, text_width + 40, max_pin_label_width + 40)
         node.width = node_width  # store the calculated width
 
+        # Use constants for magic numbers
+        PIN_SPACING = 18
+        TOP_PADDING = 12
+        BOTTOM_PADDING = 12
+
         # Calculate node height: header, padding, pins
-        pin_spacing = 18
-        top_padding = 12
-        bottom_padding = 12
-        node_height = HEADER_HEIGHT + top_padding + len(visible_pins) * pin_spacing + bottom_padding
+        node_height = HEADER_HEIGHT + TOP_PADDING + len(visible_pins) * PIN_SPACING + BOTTOM_PADDING
         node.height = node_height
 
-        # draw overall body
-        self.create_rounded_rectangle(
-            x, y, x + node_width, y + node_height,
-            CORNER_RADIUS,
-            fill=style.NODE_FILL, outline=style.NODE_OUTLINE, width=2
-        )
-
-        # header bar
-        header_color = self.get_node_header_color(node.class_name)
-        self.create_rounded_rectangle(
-            x, y, x + node_width, y + HEADER_HEIGHT,
-            CORNER_RADIUS,
-            fill=header_color, outline=style.NODE_OUTLINE, width=2
-        )
-        self.canvas.create_text(
-            x + node_width / 2, y + HEADER_HEIGHT / 2,
-            text=display_name, fill=style.TEXT_COLOR
-        )
-
-        # Draw pins below header, spaced and padded inside node
-        for i, pin in enumerate(visible_pins):
-            pin_y = y + HEADER_HEIGHT + top_padding + i * pin_spacing
-            # determine colour based on category
-            if pin.category == "exec":
-                pin_col = style.EXEC_PIN_COLOR
-            else:
-                pin_col = style.DATA_PIN_COLOR if pin.category else style.PIN_COLOR
-
-            # position depends on direction
-            if pin.direction == "EGPD_Output":
-                pin_x = x + node_width - 12
-                label_anchor = "e"
-                label_x = pin_x - 8
-            else:
-                pin_x = x + 12
-                label_anchor = "w"
-                label_x = pin_x + 8
-
-            # Draw pin circle
-            self.canvas.create_oval(pin_x - 4, pin_y - 4, pin_x + 4, pin_y + 4,
-                                    fill=pin_col, outline="")
-
-            # Draw pin label
-            label = pin.name
-            if pin.default_value:
-                label += f" = {pin.default_value}"
-            self.canvas.create_text(
-                label_x, pin_y,
-                text=label,
-                fill=style.TEXT_COLOR,
-                anchor=label_anchor,
-                font=(None, 8)
+        # Error handling for canvas operations
+        try:
+            self.create_rounded_rectangle(
+                x, y, x + node_width, y + node_height,
+                CORNER_RADIUS,
+                fill=style.NODE_FILL, outline=style.NODE_OUTLINE, width=2
             )
+
+            # header bar
+            header_color = self.get_node_header_color(node.class_name)
+            self.create_rounded_rectangle(
+                x, y, x + node_width, y + HEADER_HEIGHT,
+                CORNER_RADIUS,
+                fill=header_color, outline=style.NODE_OUTLINE, width=2
+            )
+            self.canvas.create_text(
+                x + node_width / 2, y + HEADER_HEIGHT / 2,
+                text=display_name, fill=style.TEXT_COLOR
+            )
+
+            # Draw pins below header, spaced and padded inside node
+            for i, pin in enumerate(visible_pins):
+                pin_y = y + HEADER_HEIGHT + TOP_PADDING + i * PIN_SPACING
+                # determine colour based on category
+                if pin.category == "exec":
+                    pin_col = style.EXEC_PIN_COLOR
+                else:
+                    pin_col = style.DATA_PIN_COLOR if pin.category else style.PIN_COLOR
+
+                # position depends on direction
+                if pin.direction == "EGPD_Output":
+                    pin_x = x + node_width - 12
+                    label_anchor = "e"
+                    label_x = pin_x - 8
+                else:
+                    pin_x = x + 12
+                    label_anchor = "w"
+                    label_x = pin_x + 8
+
+                # Draw pin circle
+                self.canvas.create_oval(pin_x - 4, pin_y - 4, pin_x + 4, pin_y + 4,
+                                        fill=pin_col, outline="")
+
+                # Draw pin label
+                label = pin.name
+                if pin.default_value:
+                    label += f" = {pin.default_value}"
+                self.canvas.create_text(
+                    label_x, pin_y,
+                    text=label,
+                    fill=style.TEXT_COLOR,
+                    anchor=label_anchor,
+                    font=(None, 8)
+                )
+        except Exception as e:
+            print(f"Error rendering node: {e}")

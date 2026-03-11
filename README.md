@@ -6,13 +6,18 @@ A desktop application for visualizing Unreal Engine Blueprints. Paste blueprint 
 
 ## Features
 
-- **Blueprint Parsing**: Parses Unreal Engine blueprint text exports into structured node and pin data
-- **Visual Rendering**: Renders nodes, pins, and wires in a clean, modern interface
-- **Dynamic Sizing**: Nodes automatically resize based on the number of pins
-- **Interactive Canvas**: Zoom, pan, and navigate large graphs
-- **Modern UI**: Dark theme with ttk widgets and sv_ttk styling
-- **Keyboard Shortcuts**: Ctrl+A (select all), Ctrl+Z/Y (undo/redo)
-- **Context Menus**: Right-click for text editing options
+**Blueprint Parsing**: Parses Unreal Engine blueprint text exports into structured node and pin data
+**Visual Rendering**: Renders nodes, pins, and wires in a clean, modern interface
+**Dynamic Sizing**: Nodes automatically resize based on the number of pins
+**Interactive Canvas**: Zoom, pan, and navigate large graphs
+**Node Dragging**: Move nodes interactively on the canvas
+**Fast Zooming**: Mouse wheel zoom with smooth scaling
+**Dynamic Scroll Region**: Canvas auto-adjusts scroll area as you zoom/pan
+**Improved Pin Rendering**: Pins colored by category (exec/data), positioned by direction
+**Modular Rendering**: Separation of node and wire rendering for maintainability
+**Keyboard Shortcuts**: Ctrl+A (select all), Ctrl+Z/Y (undo/redo)
+**Context Menus**: Right-click for text editing options
+**Modern UI**: Dark theme with sv_ttk widgets and sv_ttk styling
 
 ## Installation
 
